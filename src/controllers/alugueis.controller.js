@@ -1,3 +1,4 @@
+import { format, differenceInDays, differenceInDays } from 'date-fns';
 import { db } from "../database/database.connection.js";
 import { stripHtml } from "string-strip-html";
 
@@ -53,11 +54,17 @@ export async function deletaAluguel(req, res) {
 
     try {
 
-        const result = await db.query('DELETE FROM rentals WHERE id = $1', [id])
+        const result = await db.query('SELECT FROM rentals WHERE id = $1', [id])
 
         if (result.rowCount === 0) {
             return res.status(404).send("Esse aluguel não está no sistema!")
         }
+
+        if (result.rows[0].returnDate === null || undefined) {
+            return res.status(400).send({ message: "Aluguel não finalizado" })
+        }
+
+        await db.query('DELETE FROM rentals WHERE id = $1', [id]) //deleting
 
         res.status(200).send("Produto deletado com sucesso!")
 
@@ -105,7 +112,39 @@ export async function listarAlugueis(req, res) {
         }))
 
         res.send(resultFormated)
+
+    } catch (err) {
+        res.status(500).send(err.message)
+    }
+}
+
+export async function finalizarAlugueis(req, res) {
+    const {id} = req.params
+
+    try {
+        const existentId = await db.query('SELECT FROM rentals WHERE id = $1', [id])
+
+        if (existentId.rowCount === 0) {
+            return res.status(404).send("Aluguel não encontrado pelo id!")
+        }
+        if (existentId.rows[0].returnDate !== null) {
+            return res.status(400).send({ message: "Aluguel já finalizado" })
+        }
+
+        const rentDate = new Date(existentId.rows[0].rentDate)
+        const daysRented = existentId.rows[0].daysRented
+        const today = new Date()
+
+        const differenceInDays = differenceInDays(today, rentDate)
+
+        const delay = Math.max(differenceInDays - daysRented, 0)
+        const dialyPrice = existentId.rows[0].originalPrice/daysRented
+
+        const ticket = delay * dialyPrice
+
+        await db.query(`UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id = $3`, [today, ticket, id])
         
+        res.status(200).send("Produto Entregue!")
     } catch (err) {
         res.status(500).send(err.message)
     }
