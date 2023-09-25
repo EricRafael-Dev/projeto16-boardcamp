@@ -1,4 +1,4 @@
-import { db } from "../database/database.connection.js";
+import db from "../database/database.connection.js";
 import { stripHtml } from "string-strip-html";
 
 export async function listarGames (req, res) {
@@ -8,10 +8,10 @@ export async function listarGames (req, res) {
         let listGames
 
         if (name) {
-            listGames = await db.query('SELECT * FROM games WHERE name ILIKE $1', [`%${name}%`])
+            listGames = await db.query('SELECT * FROM games WHERE name ILIKE $1;', [`%${name}%`])
 
         } else {
-            listGames = await db.query(`SELECT * FROM games`)
+            listGames = await db.query(`SELECT * FROM games;`)
         }
 
         res.send(listGames.rows)
@@ -29,7 +29,7 @@ export async function inserirGames(req, res) {
     const sanitizedPricePerDay = stripHtml(String(pricePerDay)).result.trim()
 
     try {
-        const repeatName = await db.query('SELECT * FROM games WHERE name = $1', [sanitizedName]);
+        const repeatName = await db.query('SELECT * FROM games WHERE name = $1;', [sanitizedName]);
 
         if (repeatName.rows.length > 0) {
             return res.status(409).send("Nome de jogo já existente!")

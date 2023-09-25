@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { db } from "../database/database.connection.js";
+import db from "../database/database.connection.js";
 import { stripHtml } from "string-strip-html";
 
 export async function listarClientes (req, res) {
@@ -9,9 +9,9 @@ export async function listarClientes (req, res) {
     try {
         let listClients;
         if (cpf) {
-            listClients = await db.query('SELECT * FROM customers WHERE cpf ILIKE $1', [`%${cpf}%`])
+            listClients = await db.query('SELECT * FROM customers WHERE cpf ILIKE $1;', [`%${cpf}%`])
         } else {
-            listClients = await db.query('SELECT * FROM customers')
+            listClients = await db.query('SELECT * FROM customers;')
         }
 
         const formatedClients = listClients.rows.map(client => ({
@@ -31,7 +31,7 @@ export async function clientesPorID(req,res){
     const { id } = req.params
 
     try {
-        const client = await db.query('SELECT * FROM customers WHERE id = $1', [id])
+        const client = await db.query('SELECT * FROM customers WHERE id = $1;', [id])
         if (client.rows.length === 0) {
             return res.status(404).send({message: "Cliente não encontrado pelo id", id})
         }
@@ -88,7 +88,7 @@ export async function editaClientes (req, res) {
             return res.status(409).send("Cliente já existente no Banco de Dados!")
         }
 
-        await db.query('UPDATE customers SET name = $1, phone = $2, cpf = $3, birthday = $4 WHERE id = $5',[sanitizedName, sanitizedPhone, sanitizedCpf, sanitizedBirthday, id])
+        await db.query('UPDATE customers SET name = $1, phone = $2, cpf = $3, birthday = $4 WHERE id = $5;',[sanitizedName, sanitizedPhone, sanitizedCpf, sanitizedBirthday, id])
 
 		res.send("Cliente atualizado com sucesso!")
 

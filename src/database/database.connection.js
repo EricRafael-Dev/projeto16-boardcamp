@@ -8,5 +8,5 @@ const { Pool } = pg;
 const configDatabase = {
     connectionString: process.env.DATABASE_URL
 }
-
-export const db = new Pool(configDatabase);
+const db = new Pool(configDatabase)
+export default db;

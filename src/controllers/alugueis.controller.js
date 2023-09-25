@@ -1,5 +1,5 @@
-import { format, differenceInDays, differenceInDays } from 'date-fns';
-import { db } from "../database/database.connection.js";
+import { format, differenceInDays } from 'date-fns';
+import db from "../database/database.connection.js";
 import { stripHtml } from "string-strip-html";
 
 export async function inserirAlugueis(req, res) {
@@ -11,9 +11,9 @@ export async function inserirAlugueis(req, res) {
 
     try {
 
-        const clientExist = await db.query('SELECT * FROM customers WHERE id = $1', [sanitizedCustomerId]);
-        const gameExist = await db.query('SELECT * FROM games WHERE id = $1', [sanitizedGameId]);
-        const result = await db.query(`SELECT COUNT(*) AS alugueis_em_aberto FROM rentals WHERE "gameId" = $1 AND "returnDate" IS NULL`, [sanitizedGameId]);
+        const clientExist = await db.query('SELECT * FROM customers WHERE id = $1;', [sanitizedCustomerId]);
+        const gameExist = await db.query('SELECT * FROM games WHERE id = $1;', [sanitizedGameId]);
+        const result = await db.query(`SELECT COUNT(*) AS alugueis_em_aberto FROM rentals WHERE "gameId" = $1 AND "returnDate" IS NULL;`, [sanitizedGameId]);
         const alugueisEmAberto = parseInt(result.rows[0].alugueis_em_aberto)
         const estoqueTotal = gameExist.rows[0].stockTotal
         const avaliableGames = estoqueTotal - alugueisEmAberto
@@ -54,7 +54,7 @@ export async function deletaAluguel(req, res) {
 
     try {
 
-        const result = await db.query('SELECT FROM rentals WHERE id = $1', [id])
+        const result = await db.query('SELECT FROM rentals WHERE id = $1;', [id])
 
         if (result.rowCount === 0) {
             return res.status(404).send("Esse aluguel não está no sistema!")
@@ -64,7 +64,7 @@ export async function deletaAluguel(req, res) {
             return res.status(400).send({ message: "Aluguel não finalizado" })
         }
 
-        await db.query('DELETE FROM rentals WHERE id = $1', [id]) //deleting
+        await db.query('DELETE FROM rentals WHERE id = $1;', [id]) //deleting
 
         res.status(200).send("Produto deletado com sucesso!")
 
@@ -89,7 +89,7 @@ export async function listarAlugueis(req, res) {
         games.id AS "game.id",
         games.name AS "game.name" FROM rentals 
         JOIN customers ON rentals."customerId" = customers.id
-        JOIN games ON rentals."gameId" = games.id
+        JOIN games ON rentals."gameId" = games.id;
         `)
 
         const resultFormated = listaAlugueis.rows.map(item => ({
@@ -122,7 +122,7 @@ export async function finalizarAlugueis(req, res) {
     const {id} = req.params
 
     try {
-        const existentId = await db.query('SELECT FROM rentals WHERE id = $1', [id])
+        const existentId = await db.query('SELECT FROM rentals WHERE id = $1;', [id])
 
         if (existentId.rowCount === 0) {
             return res.status(404).send("Aluguel não encontrado pelo id!")
@@ -142,7 +142,7 @@ export async function finalizarAlugueis(req, res) {
 
         const ticket = delay * dialyPrice
 
-        await db.query(`UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id = $3`, [today, ticket, id])
+        await db.query(`UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id = $3;`, [today, ticket, id])
         
         res.status(200).send("Produto Entregue!")
     } catch (err) {
